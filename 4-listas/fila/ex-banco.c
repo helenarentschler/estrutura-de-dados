@@ -1,166 +1,245 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <math.h>
 
-typedef struct {
-	char titulo[100], autor[30];
-	int ano;
-} tLivro;
+typedef struct Fila Fila;
+typedef struct No No; 
 
-void carregar(tLivro** pplivros, int* ptam);
-void cadastrarLivro(tLivro** pplivros, int* ptam);
-void listarLivros(tLivro** pplivros, int* ptam);
-void pesquisarLivro(tLivro** pplivros, int* ptam);
-void desalocar(tLivro** pplivros, int* ptam);
+struct Fila {
+
+	No* inicio;
+	No* fim;
+};
+
+struct No {
+
+	int senha;
+	int atendimento;
+	No* prox;
+};
+
+int cont = 1;
+
+Fila* criaFila();
+void insereFim(Fila* fila);
+void imprimeFila(No* paux);
+void removeInicio(Fila* fila);
+void divideFila(Fila* fila, Fila* fila2);
+void removeTodos(Fila* fila);
 
 int main() {
 
-	printf("Biblioteca\n");
-	
-	tLivro* vetorLivros = NULL;
-	int tam = 0;
-	
-	int op;
+	Fila* fila = criaFila();
+	Fila* fila2 = criaFila();
+	int op = 0, opFila = 0;
 
-	do {
-		printf("\n1-Cadastrar Livro\n");
-		printf("2-Listar Livros\n");
-		printf("3-Pesquisar Livro\n");
-		printf("4-Sair\n");
+	while(op != 5) {
+
+		printf("\n1 - Gerar senha\n");	
+		printf("2 - Realizar atendimento\n");	
+		printf("3 - Dividir fila em 2\n");
+		printf("4 - Exibe fila(s)\n");
+		printf("5 - Sair\n");
 		scanf("%d", &op);
 
-		switch (op) {
+		switch(op) {
+
 			case 1:
-				cadastrarLivro(&vetorLivros, &tam);	
+				printf("====================\n");	
+				insereFim(fila);
+				printf("====================\n");
 			break;
 			case 2:
-				listarLivros(&vetorLivros, &tam);
+
+				printf("==============================\n");
+				printf("Qual fila deseja atender?\n");
+				printf("1 - Fila 1\n");
+				printf("2 - Fila 2\n");	
+
+				scanf("%d", &opFila);
+
+				if(opFila == 1) {
+					removeInicio(fila);
+				} else {
+					removeInicio(fila2);	
+				}
+				printf("==============================\n");
+
 			break;
 			case 3:
-				pesquisarLivro(&vetorLivros, &tam);
+				divideFila(fila, fila2);
 			break;
 			case 4:
-				printf("saindo...\n");
+				printf("====================\n");
+				printf("Fila 1:\n");
+				imprimeFila(fila->inicio);		
+				printf("\nFila 2:\n");
+				imprimeFila(fila2->inicio);
+				printf("====================\n");				
 			break;
-			default:
+			case 5:
+				removeTodos(fila);
+				removeTodos(fila2);
 			break;
 		}
-	} while(op!=4);
+	}
 
-	desalocar(&vetorLivros, &tam);
-	
 	return 0;
 }
 
-void carregar(tLivro** pplivros, int* ptam) {
+Fila* criaFila() {
 
-	if(!*pplivros) {
-		FILE* arquivo = fopen("acervo.txt", "r");
+	Fila* fila = (Fila*) malloc(sizeof(Fila));
 
-		if(arquivo){
-			int ret = 0;
-			tLivro livro;
+	if(fila) {
 
-			while(ret != EOF) {
-				ret = fscanf(arquivo, "%s %s %d", livro.titulo, livro.autor, &livro.ano);
-				(*ptam)++;
-			}
-				
-			(*ptam)--; // descontar linha extra
-			
-			*pplivros = (tLivro*) malloc(*ptam * (sizeof(tLivro)));
+		fila->inicio = NULL;
+		fila->fim = NULL;
 
-			if(*pplivros) {
-				int i = 0;
-				rewind(arquivo);
-	
-				while(i < *ptam) {
-					fscanf(arquivo, "%s %s %d", (*pplivros+i)->autor, (*pplivros+i)->titulo, &((*pplivros+i)->ano));
-					i++;
-				}
-				
-			} else {printf("Nao foi possivel alocar o vetor.\n");}
-				
-		} else {printf("Nao foi possivel abrir o arquivo.\n");}
+	} else {printf("Não foi possível alocar memória.\n");}
 
-		fclose(arquivo);
-		
-	} else {printf("Vetor ja foi carregado.\n");}
+	return fila;
 }
 
-void cadastrarLivro(tLivro** pplivros, int* ptam) {
+void insereFim(Fila* fila) {
 
-	FILE* arquivo = fopen("acervo.txt", "a");
+	No* novo = (No*) malloc(sizeof(No));
 
-	if(arquivo) {
-		tLivro livro;
+	if(novo) {
+
+		int at;
+
+		printf("Qual tipo de senha deseja gerar? (0 - Normal, 1 - Prioritário)\n");
+		scanf("%d", &at);
+
+		novo->senha = cont++;
+		novo->atendimento = at;
+		novo->prox = NULL;
+
+		if(!fila->inicio) {
+
+			fila->fim = novo;
+			fila->inicio = novo;
 		
-		printf("Qual o titulo da obra?\n");
-		setbuf(stdin, NULL);
-		scanf("%s", livro.titulo);
-		printf("Qual o autor da obra?\n");
-		setbuf(stdin, NULL);
-		scanf("%s", livro.autor);
-		printf("Qual o ano de publicaçao da obra?\n");
-		scanf("%d", &livro.ano);
-
-		fprintf(arquivo, "%s %s %d\n", livro.autor, livro.titulo, livro.ano);
-
-		fclose(arquivo);
-
-		desalocar(pplivros, ptam);
-		
-		carregar(pplivros, ptam);		
-		
-	} else {printf("Nao foi possivel cadastrar novo livro\n");}
-}
-
-void listarLivros(tLivro** pplivros, int* ptam) {
-
-	if(!*pplivros){carregar(pplivros, ptam);}
-
-	if(*pplivros){
-		int i;
-
-		for(i=0; i < *ptam; i++){
-			printf("Titulo: %s, Autor: %s, Ano de publicaçao: %d\n", (*pplivros+i)->titulo, (*pplivros+i)->autor, (*pplivros+i)->ano);
-		}
-	} else {printf("Nao foi possivel listar livros.\n");}
-}
-
-void pesquisarLivro(tLivro** pplivros, int* ptam) {
-
-	if(!*pplivros){carregar(pplivros, ptam);}
-
-	if(*pplivros) {
-	
-		char titulo[100];
-		int i, achei = 0;
-		
-		printf("Qual o titulo do livro que deseja pesquisar?\n");
-		setbuf(stdin, NULL);
-		scanf("%s", titulo);		
-
-		for(i=0; i < *ptam; i++) {
-			if(strcmp((*pplivros+i)->titulo,titulo) == 0) {
-				achei = 1;
-				break;
-			}
-		}
-
-		if(achei == 1) {
-			printf("O livro %s esta diponivel para emprestimo\n", (*pplivros+i)->titulo);
 		} else {
-			printf("Livro nao encontrado.\n");
+			
+			fila->fim->prox = novo;
+			fila->fim = novo;	
 		}
-		
-	} else {printf("Nao foi possivel fazer a pesquisa.\n");}
+
+	} else {printf("Não foi possível alocar memória\n");}
 }
 
-void desalocar(tLivro** pplivros, int* ptam) {
-	if(*pplivros) {
-		free(*pplivros);
-		*pplivros = NULL;
-		*ptam = 0;
-	} else {printf("Nao a vetor a ser desalocado.\n");}
+void imprimeFila(No* aux) {
+
+	if(aux) {
+
+		while(aux != NULL) {
+
+			printf("Senha %d - Atendimento %d\n", aux->senha, aux->atendimento);
+			aux = aux->prox;
+		}
+
+	} else {printf("Fila vazia\n");}
+}
+
+void removeInicio(Fila* fila) {
+
+	if(fila->inicio) {
+
+		int at;
+
+		printf("Qual tipo de atendimento deseja realizar? (0 - Normal, 1 - Prioritário)\n");
+		scanf("%d", &at);
+
+		No* aux = fila->inicio;
+
+		if (at == 0 || aux->atendimento == 1) {
+
+			fila->inicio = aux->prox;
+			free(aux);
+
+			if(!fila->inicio) {
+
+				fila->fim = NULL; 
+			}
+
+		} else if(at == 1){
+
+			No* ant = fila->inicio;
+
+			while(aux != NULL)  {
+				
+				if(aux->atendimento == 1) {
+					break;
+				}
+
+				ant = aux;
+				aux = aux->prox;
+			}
+
+			if(aux == NULL) {
+
+				printf("Nao existe cliente prioritário\n");
+				return;
+			}
+
+			ant->prox = aux->prox;
+			free(aux);
+
+			if (ant->prox == NULL){
+
+				fila->fim = ant;
+			}
+
+		} else {
+
+			printf("Opção inválido\n");
+		}
+
+	} else {printf("Fila vazia\n");}
+}
+
+void divideFila(Fila* fila, Fila* fila2) {
+
+	if(fila->inicio) {
+
+		int num = ceil(cont / 2);
+
+		No* ant = fila->inicio;
+		No* aux = fila->inicio;
+
+		for (int i = 1; i <= num; ++i) {
+			
+			ant = aux;
+			aux = aux->prox;
+		}		
+
+		ant->prox = NULL;
+		fila->fim = ant;
+
+		fila2->inicio = aux;
+		fila2->fim = fila->fim;
+
+	} else {
+
+		printf("Fila vazia\n");
+	}
+}
+
+void removeTodos(Fila* fila) {
+
+	if (fila->inicio) {
+
+		No* aux = fila->inicio;
+
+		fila->inicio = aux->prox;
+		free(aux);
+
+		if(!fila->inicio) {
+
+			fila->fim = NULL; 
+		}
+
+	} else {printf("Fila vazia\n");}
 }

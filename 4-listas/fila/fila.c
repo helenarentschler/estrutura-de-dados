@@ -1,167 +1,165 @@
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-typedef struct {
-	char titulo[100], autor[30];
-	int ano;
-} tLivro;
+typedef struct Cabeca Cabeca;
+typedef struct No No; 
 
-void carregar(tLivro** pplivros, int* ptam);
-void cadastrarLivro(tLivro** pplivros, int* ptam);
-void listarLivros(tLivro** pplivros, int* ptam);
-void pesquisarLivro(tLivro** pplivros, int* ptam);
-void desalocar(tLivro** pplivros, int* ptam);
+struct Cabeca {
+
+	No* inicio;
+	No* fim;
+};
+
+struct No {
+
+	int chave;
+	No* prox;
+};
+
+int vazia(Cabeca* cabeca);
+Cabeca* criaCabeca();
+void insereFim(Cabeca* cabeca, int chave);
+void imprimeFila(No* paux);
+void removeInicio(Cabeca* cabeca);
+void removeTodos(Cabeca* cabeca);
+void uneFilas(Cabeca* c1, Cabeca* c2);
 
 int main() {
 
-	printf("Biblioteca\n");
-	
-	tLivro* vetorLivros = NULL;
-	int tam = 0;
-	
-	int op;
+	Cabeca* fila = criaCabeca();
 
-	do {
-		printf("\n1-Cadastrar Livro\n");
-		printf("2-Listar Livros\n");
-		printf("3-Pesquisar Livro\n");
-		printf("4-Sair\n");
-		scanf("%d", &op);
+	insereFim(fila, 1);	
+	insereFim(fila, 2);
+	insereFim(fila, 3);
 
-		switch (op) {
-			case 1:
-				cadastrarLivro(&vetorLivros, &tam);	
-			break;
-			case 2:
-				listarLivros(&vetorLivros, &tam);
-			break;
-			case 3:
-				pesquisarLivro(&vetorLivros, &tam);
-			break;
-			case 4:
-				printf("saindo...\n");
-			break;
-			default:
-			break;
-		}
-	} while(op!=4);
+	imprimeFila(fila->inicio);
 
-	desalocar(&vetorLivros, &tam);
+	removeInicio(fila);
+
+	imprimeFila(fila->inicio);
 	
+	//removeTodos(fila);
+
+	imprimeFila(fila->inicio);	
+
+	Cabeca* fila2 = criaCabeca();
+	
+	insereFim(fila2, 8);	
+	insereFim(fila2, 0);
+	insereFim(fila2, 2);
+
+	imprimeFila(fila2->inicio);	
+
+	uneFilas(fila, fila2);
+
+	printf("Filas concatenadas: \n");
+	imprimeFila(fila->inicio);		
+
 	return 0;
 }
 
-void carregar(tLivro** pplivros, int* ptam) {
+int vazia(Cabeca* cabeca) {
 
-	if(!*pplivros) {
-		FILE* arquivo = fopen("acervo.txt", "r");
+	if(!cabeca->inicio) {
 
-		if(arquivo){
-			int ret = 0;
-			tLivro livro;
+		return 1;
 
-			while(ret != EOF) {
-				ret = fscanf(arquivo, "%s %s %d", livro.titulo, livro.autor, &livro.ano);
-				(*ptam)++;
-			}
-				
-			(*ptam)--; // descontar linha extra
-			
-			*pplivros = (tLivro*) malloc(*ptam * (sizeof(tLivro)));
+	} else {
 
-			if(*pplivros) {
-				int i = 0;
-				rewind(arquivo);
-	
-				while(i < *ptam) {
-					fscanf(arquivo, "%s %s %d", (*pplivros+i)->autor, (*pplivros+i)->titulo, &((*pplivros+i)->ano));
-					i++;
-				}
-				
-			} else {printf("Nao foi possivel alocar o vetor.\n");}
-				
-		} else {printf("Nao foi possivel abrir o arquivo.\n");}
-
-		fclose(arquivo);
-		
-	} else {printf("Vetor ja foi carregado.\n");}
+		return 0;
+	}
 }
 
-void cadastrarLivro(tLivro** pplivros, int* ptam) {
+Cabeca* criaCabeca() {
 
-	FILE* arquivo = fopen("acervo.txt", "a");
+	Cabeca* cabeca = (Cabeca*) malloc(sizeof(Cabeca));
 
-	if(arquivo) {
-		tLivro livro;
-		
-		printf("Qual o titulo da obra?\n");
-		setbuf(stdin, NULL);
-		scanf("%s", livro.titulo);
-		printf("Qual o autor da obra?\n");
-		setbuf(stdin, NULL);
-		scanf("%s", livro.autor);
-		printf("Qual o ano de publicaçao da obra?\n");
-		scanf("%d", &livro.ano);
+	if(cabeca) {
 
-		fprintf(arquivo, "%s %s %d\n", livro.autor, livro.titulo, livro.ano);
+		cabeca->inicio = NULL;
+		cabeca->fim = NULL;
 
-		fclose(arquivo);
+	} else {printf("Não foi possível alocar memória.\n");}
 
-		desalocar(pplivros, ptam);
-		
-		carregar(pplivros, ptam);		
-		
-	} else {printf("Nao foi possivel cadastrar novo livro\n");}
+	return cabeca;
 }
 
-void listarLivros(tLivro** pplivros, int* ptam) {
+void insereFim(Cabeca* cabeca, int chave) {
 
-	if(!*pplivros){carregar(pplivros, ptam);}
+	No* novo = (No*) malloc(sizeof(No));
 
-	if(*pplivros){
-		int i;
+	if(novo) {
 
-		for(i=0; i < *ptam; i++){
-			printf("Titulo: %s, Autor: %s, Ano de publicaçao: %d\n", (*pplivros+i)->titulo, (*pplivros+i)->autor, (*pplivros+i)->ano);
-		}
-	} else {printf("Nao foi possivel listar livros.\n");}
-}
+		novo->chave = chave;
+		novo->prox = NULL;
 
-void pesquisarLivro(tLivro** pplivros, int* ptam) {
+		if(vazia(cabeca) == 1) {
 
-	if(!*pplivros){carregar(pplivros, ptam);}
-
-	if(*pplivros) {
-	
-		char titulo[100];
-		int i, achei = 0;
+			cabeca->fim = novo;
+			cabeca->inicio = novo;
 		
-		printf("Qual o titulo do livro que deseja pesquisar?\n");
-		setbuf(stdin, NULL);
-		scanf("%s", titulo);		
-
-		for(i=0; i < *ptam; i++) {
-			if(strcmp((*pplivros+i)->titulo,titulo) == 0) {
-				achei = 1;
-				break;
-			}
-		}
-
-		if(achei == 1) {
-			printf("O livro %s esta diponivel para emprestimo\n", (*pplivros+i)->titulo);
 		} else {
-			printf("Livro nao encontrado.\n");
+			
+			cabeca->fim->prox = novo;
+			cabeca->fim = novo;	
 		}
-		
-	} else {printf("Nao foi possivel fazer a pesquisa.\n");}
+
+	} else {printf("Não foi possível alocar memória\n");}
+
 }
 
-void desalocar(tLivro** pplivros, int* ptam) {
-	if(*pplivros) {
-		free(*pplivros);
-		*pplivros = NULL;
-		*ptam = 0;
-	} else {printf("Nao a vetor a ser desalocado.\n");}
+void imprimeFila(No* paux) {
+
+	if(paux) {
+
+		while(paux != NULL) {
+
+			printf("%d\n", paux->chave);
+			paux = paux->prox;
+		}
+
+	} else {printf("Lista vazia\n");}
+}
+
+void removeInicio(Cabeca* cabeca) {
+
+	if (vazia(cabeca) == 0) {
+
+		No* prim = cabeca->inicio;
+		cabeca->inicio = prim->prox;
+		free(prim);
+
+		if(vazia(cabeca) == 1) {
+
+			cabeca->fim = NULL; 
+		}
+
+	} else {printf("Lista vazia\n");}
+}
+
+void removeTodos(Cabeca* cabeca) {
+
+	if (vazia(cabeca) == 0) {
+
+		while(cabeca->inicio) {
+
+			removeInicio(cabeca);
+		}
+
+	} else {printf("Lista vazia\n");}
+}
+
+void uneFilas(Cabeca* c1, Cabeca* c2) {
+
+	if(vazia(c1) == 1 || vazia(c2) == 1) {
+
+		printf("Uma das listas está vazia.\n");
+
+	} else {
+
+		c1->fim->prox = c2->inicio;
+		c1->fim = c2->fim;
+		c2->inicio = NULL;
+		c2->fim = NULL;
+	}
 }
