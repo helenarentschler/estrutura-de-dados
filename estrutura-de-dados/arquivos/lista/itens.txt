@@ -1,0 +1,5 @@
+3 cebola 15.80 
+2 arroz 18.00 
+5 tomate 10.20 
+1 feijao 7.90 
+5 alho 6.14
