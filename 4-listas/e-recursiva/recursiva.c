@@ -20,6 +20,7 @@ int soma(No* paux);
 int multiplica(No* paux);
 void adicionarFinal(No** prim, int k);
 No* busca(No* paux, int k);
+void removeTodos(No** prim);
 
 int main() {
 
@@ -49,6 +50,9 @@ int main() {
 
 	printf("achado: %d\n", achado->chave);
 
+	removeTodos(&prim);
+
+	imprimeLista(prim);
 }
 
 void insereInicio(No** prim, int k) {
@@ -67,6 +71,7 @@ void insereInicio(No** prim, int k) {
 void imprimeLista(No* paux) {
  
 	if(paux == NULL) {
+		printf("Fim da lista\n");
 		return;
 	}
 
@@ -146,6 +151,12 @@ No* busca(No* paux, int k) {
 	busca(paux->prox, k);
 }
 
-void removeTodos() {
+void removeTodos(No** prim) {
 	
+	if(*prim == NULL) {
+		return;
+	}
+
+	removeTodos(&(*prim)->prox);
+	free(*prim);
 }
