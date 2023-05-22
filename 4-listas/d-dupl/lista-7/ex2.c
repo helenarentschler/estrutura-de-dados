@@ -133,4 +133,3 @@ void removeChave(No **prim, int k) {
 		}
 	} else {printf("Lista vazia\n");}
 }
-
