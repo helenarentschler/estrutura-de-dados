@@ -13,6 +13,7 @@ struct No {
 void insereInicio(No** prim, int k);
 void imprime(No* aux);
 void removeInicio(No **prim);
+void removeChave(No **prim, int k);
 
 int main() {
 
@@ -25,6 +26,19 @@ int main() {
 	removeInicio(&prim);
 
 	imprime(prim);
+
+	insereInicio(&prim, 1);
+	insereInicio(&prim, 2);
+	insereInicio(&prim, 3);
+	imprime(prim);
+
+	removeChave(&prim, 2);
+	imprime(prim);
+	removeChave(&prim, 1);
+	imprime(prim);
+	removeChave(&prim, 3);
+	imprime(prim);
+
 	return 0;
 }
 
@@ -93,7 +107,30 @@ void removeChave(No **prim, int k) {
 		if((*prim)->chave == k) {
 
 			removeInicio(prim);
+
+		} else {
+
+			No* paux = *prim;
+			 
+			while(paux != NULL && paux->chave != k) {
+
+				paux = paux->prox;
+			}
+
+			if(paux) {
+			
+				paux->ant->prox = paux->prox;
+
+				if(paux->prox != NULL) {
+
+					paux->prox->ant = paux->ant;		
+				} 
+
+				free(paux);	
+				
+			} else {printf("No nao encontrado\n");}
+			
 		}
-		
 	} else {printf("Lista vazia\n");}
 }
+
