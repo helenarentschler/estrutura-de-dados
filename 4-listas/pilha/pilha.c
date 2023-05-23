@@ -23,16 +23,18 @@ void desempilha(Cabeca* cabeca);
 void imprime(No* aux);
 int topo(Cabeca* cabeca);
 void desempilhaTodos(Cabeca* cabeca);
+void unirPilhas(Cabeca* p1, Cabeca* p2);
 
 int main() {
 
 	Cabeca* pilha = criaCabeca();
+	Cabeca* pilha2 = criaCabeca();
 
 	empilha(pilha, 1);
 	empilha(pilha, 2);
 	empilha(pilha, 3);
 
-	printf("Topo: %d\n", topo(pilha));
+	/* printf("Topo: %d\n", topo(pilha));
 
 	imprime(pilha->inicio);
 
@@ -42,7 +44,16 @@ int main() {
 
 	desempilhaTodos(pilha);
 
-	imprime(pilha->inicio);
+	imprime(pilha->inicio); */
+
+	empilha(pilha2, 10);
+	empilha(pilha2, 232);
+	empilha(pilha2, 43); 
+
+	unirPilhas(pilha, pilha2);
+
+	imprime(pilha2->inicio);
+	imprime(pilha->inicio);	
 
 	return 0;
 }
@@ -134,4 +145,13 @@ void desempilhaTodos(Cabeca* cabeca) {
 		}
 
 	} else {printf("Pilha vazia\n");}
+}
+
+void unirPilhas(Cabeca* p1, Cabeca* p2) {
+
+	while(vazia(p1) != 1) {
+
+		empilha(p2, p1->inicio->chave);
+		desempilha(p1);
+	}
 }
