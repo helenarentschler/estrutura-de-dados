@@ -155,3 +155,6 @@ void unirPilhas(Cabeca* p1, Cabeca* p2) {
 		desempilha(p1);
 	}
 }
+
+
+

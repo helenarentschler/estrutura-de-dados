@@ -144,7 +144,7 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 	Celula* linha = NULL;
 	Celula* coluna = NULL;
 	Celula* anterior = NULL;
-
+                                                                                                                                                                                                                                                                                                                            
 	for (int j = 0; j < ncolunas; ++j) {
 	
 		coluna = insereColuna(cabeca, j);
