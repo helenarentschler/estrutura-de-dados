@@ -24,9 +24,22 @@ int main() {
 
 Celula* criaCabeca() {
 
+	Celula* cabeca = (Celula*) malloc(sizeof(Celula));
+
+	if(cabeca) {
+
+		cabeca->valor = -1;
+		cabeca->indiceColuna = -1;
+		cabeca->indiceLinha = -1;
+		cabeca->abaixo = cabeca;
+		cabeca->direita = cabeca; 	
+	}
+
+	return cabeca;
 }
 
-void insereCelula(int valor, int ilinha, int icoluna, Celula* linha, Celula* coluna) {
+
+void insereLinhaColuna(int valor, int ilinha, int icoluna, Celula* linha, Celula* coluna) {
 
 	Celula* nova = (Celula*) malloc(sizeof(Celula));
 
@@ -35,9 +48,19 @@ void insereCelula(int valor, int ilinha, int icoluna, Celula* linha, Celula* col
 		nova->valor = valor;
 		nova->indiceColuna = icoluna;
 		nova->indiceLinha = ilinha;
+
+		if(ilinha == -1) {
+
+			nova->abaixo = nova;
+			nova->direita = linha;
+			
+		} else if (coluna) {
+			
+
+		}
+
 		nova->abaixo = coluna;
 		nova->direita = linha; 	
-	
 	}
 }
 
@@ -52,9 +75,13 @@ void carregarImagem(char arquivo[], Celula* cabeca) {
 
 	int valor = 0;
                                                                                                                                                                                                                                                                                                                             
-	for (int j = 0; j < ncolunas; ++j) {
+	for (int i = 0; i < ncolunas; ++i) {
 	
-		insereColuna(-1, -1, j, cabeca, NULL);
+		insereCelula(-1, -1, i, cabeca, NULL);
 	}
-
+	
+	for (i = 0; i < nlinhas; ++i) {
+	
+		insereCelula(-1, i, -1, NULL, cabeca);
+	}
 }

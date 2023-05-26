@@ -30,7 +30,8 @@ void carregarImagem(char arquivo[], Cabeca* cabeca);
 int main() {
 
 	Cabeca* matriz = criaCabeca();
-	carregarImagem("castor.pgm", matriz);
+	carregarImagem("teste.pgm", matriz);
+
 	return 0;
 }
 
@@ -58,16 +59,19 @@ Celula* insereLinha(Cabeca* cabeca, int linha) {
 		novaLinha->valor = -1;
 		novaLinha->indiceColuna = -1;
 		novaLinha->indiceLinha = linha;
-		novaLinha->direita = NULL;
-		novaLinha->abaixo = NULL;
 
 		if(cabeca->ultimaLinha) {
 		
-			cabeca->ultimaLinha->abaixo = novaLinha;		
+			cabeca->ultimaLinha->abaixo = novaLinha;	
+
 		} else {
 
-			cabeca->ultimaLinha = novaLinha;
+			cabeca->primeiraLinha = novaLinha;
 		}
+
+		cabeca->ultimaLinha = novaLinha;
+		novaLinha->direita = novaLinha;
+		novaLinha->abaixo = cabeca->primeiraLinha;
 	}
 
 	return novaLinha;
@@ -94,38 +98,73 @@ Celula* insereColuna(Cabeca* cabeca, int coluna) {
 		}
 
 		cabeca->ultimaColuna = novaColuna;
-		novaColuna->direita = cabeca;
+		novaColuna->direita = cabeca->primeiraColuna;
 		novaColuna->abaixo = novaColuna;
 	}
 
 	return novaColuna;
 }
 
-Celula* insereCelula(Celula* linha, Celula* coluna, Celula* anterior, int valor) {
+Celula* insereCelula(int valor, int linha, int coluna, int nlinhas, int ncolunas, Cabeca* cabeca) {
 
 	Celula* nova = (Celula*) malloc(sizeof(Celula));
 
 	if(nova) {
 
 		nova->valor = valor;
-		nova->indiceColuna = coluna->indiceColuna;
-		nova->indiceLinha = linha->indiceLinha;
+		nova->indiceColuna = coluna;
+		nova->indiceLinha = linha;
 		
-		if(!anterior) {
-		
-			linha->direita = nova;
-			coluna->abaixo = nova;
-			nova->abaixo = coluna;
-			nova->direita = linha; 	
+		Celula* linhaAchada = cabeca->primeiraLinha;
+		Celula* colunaAchada = cabeca->primeiraColuna;
 
+		do {
+
+			linhaAchada = linhaAchada->abaixo;
+		
+		} while(linhaAchada != cabeca->primeiraLinha && linhaAchada->indiceLinha != linha);
+
+		do {
+
+			colunaAchada = colunaAchada->direita;
+		
+		} while(colunaAchada != cabeca->primeiraColuna && colunaAchada->indiceColuna != coluna);
+
+		if(linhaAchada->direita == linhaAchada) {
+
+			linhaAchada->direita = nova;
+			nova->direita = linhaAchada;
+		
 		} else {
 
-			anterior->direita = nova;
-			coluna->abaixo = nova;
-			nova->abaixo = coluna;
-			nova->direita = linha;
+			Celula* pauxlinha = linhaAchada->direita;
+
+			do {
+				pauxlinha = pauxlinha->direita;
+			} while (pauxlinha->direita != linhaAchada->direita);
+
+			pauxlinha->direita = nova;
+			nova->direita = linhaAchada;
+
 		}
 		
+		if(colunaAchada->abaixo == colunaAchada) {
+
+			colunaAchada->abaixo = nova;
+			nova->abaixo = colunaAchada;
+		
+		} else {
+
+			Celula* pauxcoluna = colunaAchada->abaixo;
+
+			do {
+				pauxcoluna = pauxcoluna->abaixo;
+			} while (pauxcoluna->abaixo != colunaAchada->abaixo);
+
+			pauxcoluna->abaixo = nova;
+			nova->abaixo = colunaAchada;
+		}
+
 	}
 
 	return nova;
@@ -141,26 +180,27 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 	fscanf(imagem, "%s %d %d", formato, &nlinhas, &ncolunas);
 
 	int valor = 0;
-	Celula* linha = NULL;
-	Celula* coluna = NULL;
-	Celula* anterior = NULL;
-                                                                                                                                                                                                                                                                                                                            
-	for (int j = 0; j < ncolunas; ++j) {
-	
-		coluna = insereColuna(cabeca, j);
+    int pixel = 0;
+
+    Celula* celula = NULL;
+
+	for (int i = 0; i < ncolunas; ++i) {
+
+		insereColuna(cabeca, i);
 	}
-	
+
 	for (int i = 0; i < nlinhas; ++i) {
 
-		linha = insereLinha(cabeca, i);
-		
-		for (int j = 0; j < ncolunas; ++j) {
-		
-			fscanf(imagem, "%d", &valor);
+		insereLinha(cabeca, i);	
+
+		for (int j = 0; j < ncolunas; ++j){
 			
-			if(valor != 255) {
-				
-				anterior = insereCelula(linha, coluna, anterior, valor);
+			fscanf(imagem, "%d", &pixel);
+
+			if(pixel != 255) {
+
+				celula = insereCelula(pixel, i, j, nlinhas, ncolunas, cabeca);
+				printf("[%d %d %d] ", celula->valor, celula->indiceLinha, celula->indiceColuna);
 			}
 		}
 	}
