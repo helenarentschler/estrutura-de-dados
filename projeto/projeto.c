@@ -23,14 +23,21 @@ struct Cabeca {
 };
 
 Cabeca* criaCabeca();
-Celula* insereLinha(Cabeca* cabeca, int linha);
-Celula* insereColuna(Cabeca* cabeca, int coluna);
-void carregarImagem(char arquivo[], Cabeca* cabeca);
+void insereLinha(Cabeca* cabeca, int linha);
+void insereColuna(Cabeca* cabeca, int coluna);
+void carregarImagem(char arquivo[], Cabeca* cabeca, int* nPixels, int* histograma);
+float calcularLimiar(int* histograma, int nPixels);
 
 int main() {
 
+	//histograma
+	//limiar - identificar o vale 
+	int histograma[256];
+	int nPixels;
 	Cabeca* matriz = criaCabeca();
-	carregarImagem("teste.pgm", matriz);
+	carregarImagem("teste.pgm", matriz, &nPixels, histograma);
+	float limiar = calcularLimiar(histograma, nPixels);
+	printf("%f\n", limiar);
 
 	return 0;
 }
@@ -50,7 +57,7 @@ Cabeca* criaCabeca() {
 	return cabeca;
 }
 
-Celula* insereLinha(Cabeca* cabeca, int linha) {
+void insereLinha(Cabeca* cabeca, int linha) {
 	
 	Celula* novaLinha = (Celula*) malloc(sizeof(Celula));
 
@@ -74,10 +81,9 @@ Celula* insereLinha(Cabeca* cabeca, int linha) {
 		novaLinha->abaixo = cabeca->primeiraLinha;
 	}
 
-	return novaLinha;
 }
 
-Celula* insereColuna(Cabeca* cabeca, int coluna) {
+void insereColuna(Cabeca* cabeca, int coluna) {
 	
 	Celula* novaColuna = (Celula*) malloc(sizeof(Celula));
 
@@ -101,8 +107,6 @@ Celula* insereColuna(Cabeca* cabeca, int coluna) {
 		novaColuna->direita = cabeca->primeiraColuna;
 		novaColuna->abaixo = novaColuna;
 	}
-
-	return novaColuna;
 }
 
 Celula* insereCelula(int valor, int linha, int coluna, int nlinhas, int ncolunas, Cabeca* cabeca) {
@@ -122,7 +126,7 @@ Celula* insereCelula(int valor, int linha, int coluna, int nlinhas, int ncolunas
 
 			linhaAchada = linhaAchada->abaixo;
 		
-		} while(linhaAchada != cabeca->primeiraLinha && linhaAchada->indiceLinha != linha);
+		} while(linhaAchada != cabeca->primeiraLinha && linhaAchada->indiceLinha != linha);	
 
 		do {
 
@@ -141,7 +145,7 @@ Celula* insereCelula(int valor, int linha, int coluna, int nlinhas, int ncolunas
 
 			do {
 				pauxlinha = pauxlinha->direita;
-			} while (pauxlinha->direita != linhaAchada->direita);
+			} while (pauxlinha->direita != linhaAchada);
 
 			pauxlinha->direita = nova;
 			nova->direita = linhaAchada;
@@ -159,7 +163,7 @@ Celula* insereCelula(int valor, int linha, int coluna, int nlinhas, int ncolunas
 
 			do {
 				pauxcoluna = pauxcoluna->abaixo;
-			} while (pauxcoluna->abaixo != colunaAchada->abaixo);
+			} while (pauxcoluna->abaixo != colunaAchada);
 
 			pauxcoluna->abaixo = nova;
 			nova->abaixo = colunaAchada;
@@ -170,16 +174,16 @@ Celula* insereCelula(int valor, int linha, int coluna, int nlinhas, int ncolunas
 	return nova;
 }
 
-void carregarImagem(char arquivo[], Cabeca* cabeca) {
+void carregarImagem(char arquivo[], Cabeca* cabeca, int* nPixels, int* histograma) {
 
 	FILE* imagem = fopen(arquivo, "r");
 
 	char formato[2];
 	int nlinhas, ncolunas;
+	*nPixels = nlinhas*ncolunas;
 
 	fscanf(imagem, "%s %d %d", formato, &nlinhas, &ncolunas);
 
-	int valor = 0;
     int pixel = 0;
 
     Celula* celula = NULL;
@@ -192,11 +196,15 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 	for (int i = 0; i < nlinhas; ++i) {
 
 		insereLinha(cabeca, i);	
+	}
+
+	for (int i = 0; i < nlinhas; ++i) {
 
 		for (int j = 0; j < ncolunas; ++j){
 			
 			fscanf(imagem, "%d", &pixel);
-
+			(*(histograma+pixel))++;
+			printf("testeeee %d\n", histograma[pixel]);
 			if(pixel != 255) {
 
 				celula = insereCelula(pixel, i, j, nlinhas, ncolunas, cabeca);
@@ -204,4 +212,18 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 			}
 		}
 	}
+}
+
+float calcularLimiar(int* histograma, int nPixels) {
+
+	float limiar = 0;
+
+	for (int i = 0; i < 256; ++i) {
+		
+		limiar = (histograma[i]*i) + limiar;	
+	}
+
+	limiar = limiar / nPixels;
+
+	return limiar;
 }
