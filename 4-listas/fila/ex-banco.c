@@ -194,7 +194,7 @@ void removeInicio(Fila* fila) {
 
 		} else {
 
-			printf("Opção inválido\n");
+			printf("Opção inválida\n");
 		}
 
 	} else {printf("Fila vazia\n");}

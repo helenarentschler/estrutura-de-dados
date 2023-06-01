@@ -24,6 +24,7 @@ void imprime(No* aux);
 int topo(Cabeca* cabeca);
 void desempilhaTodos(Cabeca* cabeca);
 void unirPilhas(Cabeca* p1, Cabeca* p2);
+void desempilhaEspecifico(Cabeca* pilha, int chave);
 
 int main() {
 
@@ -54,6 +55,21 @@ int main() {
 
 	imprime(pilha2->inicio);
 	imprime(pilha->inicio);	
+
+	Cabeca* pilhaNova = criaCabeca();
+
+	empilha(pilhaNova, 1);
+	empilha(pilhaNova, 4);
+	empilha(pilhaNova, 2);
+	empilha(pilhaNova, 0);
+	empilha(pilhaNova, 3);
+	empilha(pilhaNova, 8);
+
+	imprime(pilhaNova->inicio);
+	
+	desempilhaEspecifico(pilhaNova, 0);
+
+	imprime(pilhaNova->inicio);
 
 	return 0;
 }
@@ -156,5 +172,21 @@ void unirPilhas(Cabeca* p1, Cabeca* p2) {
 	}
 }
 
+void desempilhaEspecifico(Cabeca* pilha, int chave) {
 
+	Cabeca* pilha2 = criaCabeca();
 
+	while(!vazia(pilha) && pilha->inicio->chave != chave) {
+
+		empilha(pilha2, pilha->inicio->chave);
+		desempilha(pilha);
+	}
+
+	desempilha(pilha);
+
+	while(!vazia(pilha2)) {
+	
+		empilha(pilha, pilha2->inicio->chave);
+		desempilha(pilha2);
+	}
+}
