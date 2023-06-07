@@ -33,8 +33,14 @@ int main() {
 	//histograma
 	//limiar - identificar o vale 
 	int histograma[256];
-	int nPixels;
+	int nPixels = 0;
 	Cabeca* matriz = criaCabeca();
+
+	for (int i = 0; i < 256; ++i)
+	{
+		histograma[i] = 0;
+	}
+
 	carregarImagem("teste.pgm", matriz, &nPixels, histograma);
 	float limiar = calcularLimiar(histograma, nPixels);
 	printf("%f\n", limiar);
@@ -174,7 +180,7 @@ Celula* insereCelula(int valor, int linha, int coluna, int nlinhas, int ncolunas
 	return nova;
 }
 
-void carregarImagem(char arquivo[], Cabeca* cabeca, int* nPixels, int* histograma) {
+void carregarImagem(char arquivo[], Cabeca* cabeca, int* histograma) {
 
 	FILE* imagem = fopen(arquivo, "r");
 
@@ -203,8 +209,8 @@ void carregarImagem(char arquivo[], Cabeca* cabeca, int* nPixels, int* histogram
 		for (int j = 0; j < ncolunas; ++j){
 			
 			fscanf(imagem, "%d", &pixel);
-			(*(histograma+pixel))++;
-			printf("testeeee %d\n", histograma[pixel]);
+			(histograma[pixel])++;
+
 			if(pixel != 255) {
 
 				celula = insereCelula(pixel, i, j, nlinhas, ncolunas, cabeca);
@@ -216,10 +222,11 @@ void carregarImagem(char arquivo[], Cabeca* cabeca, int* nPixels, int* histogram
 
 float calcularLimiar(int* histograma, int nPixels) {
 
+	printf("N de pixels: %d\n", nPixels);
 	float limiar = 0;
 
 	for (int i = 0; i < 256; ++i) {
-		
+		printf("%d\n", histograma[i]);
 		limiar = (histograma[i]*i) + limiar;	
 	}
 
