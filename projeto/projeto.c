@@ -1,4 +1,3 @@
-//mudar tudo para mesmo tipo, pois todos vao se apontar entre si
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,15 +24,13 @@ struct Cabeca {
 Cabeca* criaCabeca();
 void insereLinha(Cabeca* cabeca, int linha);
 void insereColuna(Cabeca* cabeca, int coluna);
-void carregarImagem(char arquivo[], Cabeca* cabeca, int* nPixels, int* histograma);
+void carregarImagem(char arquivo[], Cabeca* cabeca, int* histograma);
 float calcularLimiar(int* histograma, int nPixels);
+void imprimeHistograma(int* hist);
 
 int main() {
 
-	//histograma
-	//limiar - identificar o vale 
 	int histograma[256];
-	int nPixels = 0;
 	Cabeca* matriz = criaCabeca();
 
 	for (int i = 0; i < 256; ++i)
@@ -41,9 +38,9 @@ int main() {
 		histograma[i] = 0;
 	}
 
-	carregarImagem("teste.pgm", matriz, &nPixels, histograma);
-	float limiar = calcularLimiar(histograma, nPixels);
-	printf("%f\n", limiar);
+	carregarImagem("teste.pgm", matriz, histograma);
+
+	imprimeHistograma(histograma);
 
 	return 0;
 }
@@ -186,7 +183,6 @@ void carregarImagem(char arquivo[], Cabeca* cabeca, int* histograma) {
 
 	char formato[2];
 	int nlinhas, ncolunas;
-	*nPixels = nlinhas*ncolunas;
 
 	fscanf(imagem, "%s %d %d", formato, &nlinhas, &ncolunas);
 
@@ -220,7 +216,20 @@ void carregarImagem(char arquivo[], Cabeca* cabeca, int* histograma) {
 	}
 }
 
-float calcularLimiar(int* histograma, int nPixels) {
+void imprimeHistograma(int* hist) {
+
+	FILE* planilha = fopen("histograma.csv", "w");
+	
+	for(int i = 0; i < 255; i++) {
+
+		fprintf(planilha, "%d;%d\n", hist[i], i);
+	}
+}
+
+
+
+
+/* float calcularLimiar(int* histograma, int nPixels) {
 
 	printf("N de pixels: %d\n", nPixels);
 	float limiar = 0;
@@ -233,4 +242,4 @@ float calcularLimiar(int* histograma, int nPixels) {
 	limiar = limiar / nPixels;
 
 	return limiar;
-}
+}*/
