@@ -38,7 +38,7 @@ int main() {
 		histograma[i] = 0;
 	}
 
-	carregarImagem("teste.pgm", matriz, histograma);
+	carregarImagem("castor.pgm", matriz, histograma);
 
 	imprimeHistograma(histograma);
 
