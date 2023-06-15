@@ -24,23 +24,21 @@ struct Cabeca {
 Cabeca* criaCabeca();
 void insereLinha(Cabeca* cabeca, int linha);
 void insereColuna(Cabeca* cabeca, int coluna);
-void carregarImagem(char arquivo[], Cabeca* cabeca, int* histograma);
-float calcularLimiar(int* histograma, int nPixels);
-void imprimeHistograma(int* hist);
+Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca);
+void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* predominante);
+void carregarImagem(char arquivo[], Cabeca* cabeca, int* predominante);
+int limiarMetodoOtsu(int* histograma, int nPixels);
 
 int main() {
 
 	int histograma[256];
+	int nPixels = 0;
+	int predominante = 0;
+	
 	Cabeca* matriz = criaCabeca();
 
-	for (int i = 0; i < 256; ++i)
-	{
-		histograma[i] = 0;
-	}
-
-	carregarImagem("castor.pgm", matriz, histograma);
-
-	imprimeHistograma(histograma);
+	preencherHistograma("teste.pgm", &nPixels, histograma, &predominante);
+	carregarImagem("teste.pgm", matriz, &predominante);
 
 	return 0;
 }
@@ -112,7 +110,7 @@ void insereColuna(Cabeca* cabeca, int coluna) {
 	}
 }
 
-Celula* insereCelula(int valor, int linha, int coluna, int nlinhas, int ncolunas, Cabeca* cabeca) {
+Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca) {
 
 	Celula* nova = (Celula*) malloc(sizeof(Celula));
 
@@ -177,16 +175,54 @@ Celula* insereCelula(int valor, int linha, int coluna, int nlinhas, int ncolunas
 	return nova;
 }
 
-void carregarImagem(char arquivo[], Cabeca* cabeca, int* histograma) {
+void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* predominante) {
+
+	FILE* imagem = fopen(arquivo, "r");
+	
+	char formato[2];
+	int nlinhas, ncolunas;
+	int ret = 0;
+	int pixel = 0;
+	int maior = 0;
+
+	for (int i = 0; i < 256; ++i) {
+		histograma[i] = 0;
+	}
+
+	//le primeiras 2 linhas: formato e tamanho da imagem
+	fscanf(imagem, "%s %d %d", formato, &nlinhas, &ncolunas);
+
+	//atualiza numeor de pixels na main
+	(*nPixels) = nlinhas*ncolunas;
+
+	while(ret != EOF) {
+	
+		ret = fscanf(imagem, "%d", &pixel);
+		(histograma[pixel])++;			
+	}
+
+	for(int i = 0; i < 256; i++){
+
+		if(histograma[i] > maior) {
+			maior = i;
+		}
+	}
+
+	
+	*predominante = maior;
+}
+
+//funçao que carrega uma imagem na matriz esparsa
+void carregarImagem(char arquivo[], Cabeca* cabeca, int* predominante) {
 
 	FILE* imagem = fopen(arquivo, "r");
 
 	char formato[2];
 	int nlinhas, ncolunas;
+	int pixel = 0;
 
+	//li primeiras 2 linhas: formato e tamanho da imagem
 	fscanf(imagem, "%s %d %d", formato, &nlinhas, &ncolunas);
-
-    int pixel = 0;
 
     Celula* celula = NULL;
 
@@ -205,41 +241,55 @@ void carregarImagem(char arquivo[], Cabeca* cabeca, int* histograma) {
 		for (int j = 0; j < ncolunas; ++j){
 			
 			fscanf(imagem, "%d", &pixel);
-			(histograma[pixel])++;
 
-			if(pixel != 255) {
+			if(pixel != *predominante) {
 
-				celula = insereCelula(pixel, i, j, nlinhas, ncolunas, cabeca);
+				celula = insereCelula(pixel, i, j, cabeca);
 				printf("[%d %d %d] ", celula->valor, celula->indiceLinha, celula->indiceColuna);
 			}
 		}
 	}
 }
 
-void imprimeHistograma(int* hist) {
 
-	FILE* planilha = fopen("histograma.csv", "w");
+
+/*int limiarMetodoOtsu(int* histograma, int nPixels) {
 	
-	for(int i = 0; i < 255; i++) {
+	float wb, wf, mf, mb, delta;
+	float limiares[256];
+	
+	for(int i = 0; i < 256; i++) {
 
-		fprintf(planilha, "%d;%d\n", hist[i], i);
-	}
-}
+		wb = 0;
+		wf = 0; 
+		mf = 0; 
+		mb = 0;
+		delta = 0;
+		
+		for(int j = 0; j < i; j++) {
 
+			wb += histograma[j];
+			mb +=  histograma[j]*j;	
+		
+		}
 
+		for(int k = i; k < 256; k++){
 
+			wf += histograma[k];
+			mf +=  histograma[k]*k;
+		}
 
-/* float calcularLimiar(int* histograma, int nPixels) {
+		if(wb && wf) {
+			mb = mb/wb;’¢
+			mf = mf/wf;
+			wb = wb/nPixels;
+			wf = wf/nPixels;	
+		}
+		
+		delta = wb*wf*(mb-mf)*(mb-mf);
 
-	printf("N de pixels: %d\n", nPixels);
-	float limiar = 0;
+		printf("i %d, mb %f, wb %f, mf %f, wf %f, delta %f\n",i, mb, wb, mf, wf, delta);	
 
-	for (int i = 0; i < 256; ++i) {
-		printf("%d\n", histograma[i]);
-		limiar = (histograma[i]*i) + limiar;	
-	}
-
-	limiar = limiar / nPixels;
-
-	return limiar;
+		limiares[i] = delta;
+	}	
 }*/
