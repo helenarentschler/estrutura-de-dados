@@ -1,10 +1,11 @@
-
+//Trabalho estrutura de dados: Helena Rentschler e Paulo Adriano Lupepsa
 #include <stdio.h>
 #include <stdlib.h>
 
 typedef struct Celula Celula;
 typedef struct Cabeca Cabeca;
 
+//struct define celulas cabeça de cada linha e cada coluna (indice -1) e também as celulas que contém valores de pixel
 struct Celula {
 
 	int valor;
@@ -13,6 +14,7 @@ struct Celula {
 	Celula* abaixo;
 };
 
+//cabeça que aponta para celulas cabeça de linha e coluna
 struct Cabeca {
 
 	Celula* primeiraLinha;
@@ -27,12 +29,15 @@ void insereColuna(Cabeca* cabeca, int coluna);
 Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca);
 void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* predominante);
 void carregarImagem(char arquivo[], Cabeca* cabeca, int* predominante);
+void imprimeMatriz(Cabeca* cabeca);
 int limiarMetodoOtsu(int* histograma, int nPixels);
 
 int main() {
 
+	//vetor histograma - indice = tom de cinza / valor = quantidade de pixels com aquele tom
 	int histograma[256];
 	int nPixels = 0;
+	//tom de cinza predominante a ser ignorado na matriz esparsa
 	int predominante = 0;
 	
 	Cabeca* matriz = criaCabeca();
@@ -40,6 +45,10 @@ int main() {
 	preencherHistograma("teste.pgm", &nPixels, histograma, &predominante);
 	carregarImagem("teste.pgm", matriz, &predominante);
 
+	imprimeMatriz(matriz);
+
+	limiarMetodoOtsu(histograma, nPixels);
+	
 	return 0;
 }
 
@@ -94,7 +103,6 @@ void insereColuna(Cabeca* cabeca, int coluna) {
 		novaColuna->indiceColuna = coluna;
 		novaColuna->indiceLinha = -1;
 		
-
 		if(cabeca->primeiraColuna) {
 		
 			cabeca->ultimaColuna->direita = novaColuna;		
@@ -110,33 +118,46 @@ void insereColuna(Cabeca* cabeca, int coluna) {
 	}
 }
 
+//insere celula correspondente ao pixel no 
 Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca) {
 
 	Celula* nova = (Celula*) malloc(sizeof(Celula));
-
+	
 	if(nova) {
 
 		nova->valor = valor;
 		nova->indiceColuna = coluna;
 		nova->indiceLinha = linha;
-		
+
+		//auxiliares que vao buscar as cabeças correspondentes a linha e coluna
 		Celula* linhaAchada = cabeca->primeiraLinha;
 		Celula* colunaAchada = cabeca->primeiraColuna;
 
+		//busca da cabeça da linha
 		do {
 
-			linhaAchada = linhaAchada->abaixo;
-		
-		} while(linhaAchada != cabeca->primeiraLinha && linhaAchada->indiceLinha != linha);	
+			if(linhaAchada->indiceLinha == linha) {
+				break;	
+			}	
 
+			linhaAchada = linhaAchada->abaixo;	
+				
+		} while(linhaAchada != cabeca->primeiraLinha);	
+
+		//busca da cabeça da coluna
 		do {
 
+			if(colunaAchada->indiceColuna != coluna) {
+				break;
+			}
+			
 			colunaAchada = colunaAchada->direita;
 		
-		} while(colunaAchada != cabeca->primeiraColuna && colunaAchada->indiceColuna != coluna);
+		} while(colunaAchada != cabeca->primeiraColuna);
 
+		//ou seja, a linha esta vazia
 		if(linhaAchada->direita == linhaAchada) {
-
+			
 			linhaAchada->direita = nova;
 			nova->direita = linhaAchada;
 		
@@ -146,6 +167,7 @@ Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca) {
 
 			do {
 				pauxlinha = pauxlinha->direita;
+				//final da linha
 			} while (pauxlinha->direita != linhaAchada);
 
 			pauxlinha->direita = nova;
@@ -175,6 +197,7 @@ Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca) {
 	return nova;
 }
 
+// percorre o arquivo e preenche o vetor histograma com os valores correnpondentes
 void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* predominante) {
 
 	FILE* imagem = fopen(arquivo, "r");
@@ -192,7 +215,7 @@ void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* pre
 	//le primeiras 2 linhas: formato e tamanho da imagem
 	fscanf(imagem, "%s %d %d", formato, &nlinhas, &ncolunas);
 
-	//atualiza numeor de pixels na main
+	//atualiza numero de pixels na main
 	(*nPixels) = nlinhas*ncolunas;
 
 	while(ret != EOF) {
@@ -207,7 +230,6 @@ void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* pre
 			maior = i;
 		}
 	}
-
 	
 	*predominante = maior;
 }
@@ -221,18 +243,20 @@ void carregarImagem(char arquivo[], Cabeca* cabeca, int* predominante) {
 	int nlinhas, ncolunas;
 	int pixel = 0;
 
-	//li primeiras 2 linhas: formato e tamanho da imagem
+	//le primeiras 2 linhas: formato e tamanho da imagem
 	fscanf(imagem, "%s %d %d", formato, &nlinhas, &ncolunas);
 
     Celula* celula = NULL;
 
 	for (int i = 0; i < ncolunas; ++i) {
 
+		//insere celulas cabeça de coluna
 		insereColuna(cabeca, i);
 	}
 
 	for (int i = 0; i < nlinhas; ++i) {
 
+		//insere celulas cabeca de coluna
 		insereLinha(cabeca, i);	
 	}
 
@@ -251,45 +275,73 @@ void carregarImagem(char arquivo[], Cabeca* cabeca, int* predominante) {
 	}
 }
 
+//funçao de teste que imprime a matriz linha a linha
+void imprimeMatriz(Cabeca* cabeca) {
+
+	Celula* auxLinha = cabeca->primeiraLinha;
+	Celula* aux = cabeca->primeiraLinha;
+
+	do {
+		//se a linha for vazia, nao imprime
+		if(auxLinha->direita != auxLinha) {
+			//começa pela primeira celula
+			aux = auxLinha->direita; 
+					
+			do {
+			
+				printf("valor %d\n", aux->valor);		
+				aux = aux->direita;		
+				
+			} while(aux != auxLinha);	
+		}
+		
+		auxLinha = auxLinha->abaixo;
+
+	} while(auxLinha != cabeca->primeiraLinha);
+	 
+}
 
 
-/*int limiarMetodoOtsu(int* histograma, int nPixels) {
+int limiarMetodoOtsu(int* histograma, int nPixels) {
 	
-	float wb, wf, mf, mb, delta;
-	float limiares[256];
+	float wb, wf, mf, mb, delta, deltamax = 0.0;
+	int limiarotimo = 0;
 	
 	for(int i = 0; i < 256; i++) {
 
-		wb = 0;
-		wf = 0; 
-		mf = 0; 
-		mb = 0;
-		delta = 0;
+		wb = 0.0;
+		wf = 0.0; 
 		
 		for(int j = 0; j < i; j++) {
 
-			wb += histograma[j];
-			mb +=  histograma[j]*j;	
+			wb += histograma[j] / nPixels;
 		
 		}
+		
+		wf = 1 - wb;
 
-		for(int k = i; k < 256; k++){
+		mb = 0.0;
+		mf = 0.0;
 
-			wf += histograma[k];
-			mf +=  histograma[k]*k;
+		if(wb != 0) {
+			for(int j = 0; j <= i; j++) {
+				mb += (j * histograma[j] / (nPixels * wb));		
+			}
 		}
-
-		if(wb && wf) {
-			mb = mb/wb;’¢
-			mf = mf/wf;
-			wb = wb/nPixels;
-			wf = wf/nPixels;	
+		if(wf != 0) {
+			for(int j = i + 1; j < 256; j++){
+				mf += (j * histograma[j] / (nPixels * wf));	
+			}	
 		}
 		
 		delta = wb*wf*(mb-mf)*(mb-mf);
 
-		printf("i %d, mb %f, wb %f, mf %f, wf %f, delta %f\n",i, mb, wb, mf, wf, delta);	
-
-		limiares[i] = delta;
+		if(delta > deltamax) {
+			deltamax = delta;
+			limiarotimo = i;
+		}
 	}	
-}*/
+
+	printf("Limiar otimo em %d, valor: %f", limiarotimo, deltamax);
+	
+}
