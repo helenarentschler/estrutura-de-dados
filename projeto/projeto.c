@@ -304,44 +304,44 @@ void imprimeMatriz(Cabeca* cabeca) {
 
 int limiarMetodoOtsu(int* histograma, int nPixels) {
 	
-	float wb, wf, mf, mb, delta, deltamax = 0.0;
-	int limiarotimo = 0;
-	
-	for(int i = 0; i < 256; i++) {
+	double variancia_maxima = 0.0;
+    int limiar_otimo = 0;
 
-		wb = 0.0;
-		wf = 0.0; 
-		
-		for(int j = 0; j < i; j++) {
+    for (int limiar = 0; limiar < 256; limiar++) {
+        // Calcula a probabilidade de pixels abaixo e acima do limiar
+        double probabilidade_abaixo = 0.0;
+        double probabilidade_acima = 0.0;
 
-			wb += histograma[j] / nPixels;
-		
-		}
-		
-		wf = 1 - wb;
+        for (int i = 0; i <= limiar; i++) {
+            probabilidade_abaixo += (double) histograma[i] / nPixels;
+        }
+        probabilidade_acima = 1.0 - probabilidade_abaixo;
 
-		mb = 0.0;
-		mf = 0.0;
+        // Calcula as médias dos pixels abaixo e acima do limiar
+        double media_abaixo = 0.0;
+        double media_acima = 0.0;
 
-		if(wb != 0) {
-			for(int j = 0; j <= i; j++) {
-				mb += (j * histograma[j] / (nPixels * wb));		
-			}
-		}
-		if(wf != 0) {
-			for(int j = i + 1; j < 256; j++){
-				mf += (j * histograma[j] / (nPixels * wf));	
-			}	
-		}
-		
-		delta = wb*wf*(mb-mf)*(mb-mf);
+        if (probabilidade_abaixo != 0.0) {
+            for (int i = 0; i <= limiar; i++) {
+                media_abaixo += (i * histograma[i]) / (nPixels * probabilidade_abaixo);
+            }
+        }
+        if (probabilidade_acima != 0.0) {
+            for (int i = limiar + 1; i < 256; i++) {
+                media_acima += (i * histograma[i]) / (nPixels * probabilidade_acima);
+            }
+        }
 
-		if(delta > deltamax) {
-			deltamax = delta;
-			limiarotimo = i;
-		}
-	}	
+        // Calcula a variância entre as classes abaixo e acima do limiar
+        double variancia = probabilidade_abaixo * probabilidade_acima * (media_abaixo - media_acima) * (media_abaixo - media_acima);
 
-	printf("Limiar otimo em %d, valor: %f", limiarotimo, deltamax);
+        // Atualiza o limiar ótimo se a variância for maior
+        if (variancia > variancia_maxima) {
+            variancia_maxima = variancia;
+            limiar_otimo = limiar;
+        }
+    }
+
+    printf("Limiar ótimo: %d\n", limiar_otimo);
 	
 }
