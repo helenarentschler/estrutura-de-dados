@@ -46,11 +46,11 @@ int main() {
 	
 	Cabeca* matriz = criaCabeca();
 
-	preencherHistograma("lena.pgm", &nPixels, histograma, &predominante, &nlinhas, &ncolunas);
+	preencherHistograma("monalisa.pgm", &nPixels, histograma, &predominante, &nlinhas, &ncolunas);
 
 	printf("%d", predominante);
 	
-	carregarImagem("lena.pgm", matriz);
+	carregarImagem("monalisa.pgm", matriz);
 
 	limiarMetodoOtsu(histograma, nPixels, &limiar);
 
