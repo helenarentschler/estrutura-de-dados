@@ -44,17 +44,17 @@ int main() {
 	
 	Cabeca* matriz = criaCabeca();
 
-	preencherHistograma("castor.pgm", &nPixels, histograma, &predominante);
+	preencherHistograma("lena.pgm", &nPixels, histograma, &predominante);
 
 	printf("%d", predominante);
 	
-	carregarImagem("castor.pgm", matriz, &predominante);
+	carregarImagem("lena.pgm", matriz, &predominante);
 
 	limiarMetodoOtsu(histograma, nPixels, &limiar);
 
 	printf("%d", limiar);
 
-	binarizarImagem(matriz, limiar, predominante, 800, 361);
+	binarizarImagem(matriz, limiar, predominante, 512, 512);
 	
 	return 0;
 }
