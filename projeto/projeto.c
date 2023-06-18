@@ -27,8 +27,8 @@ Cabeca* criaCabeca();
 void insereLinha(Cabeca* cabeca, int linha);
 void insereColuna(Cabeca* cabeca, int coluna);
 Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca);
-void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* predominante);
-void carregarImagem(char arquivo[], Cabeca* cabeca, int* predominante);
+void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* predominante, int* nlinhas, int* colunas);
+void carregarImagem(char arquivo[], Cabeca* cabeca);
 void imprimeMatriz(Cabeca* cabeca);
 void limiarMetodoOtsu(int* histograma, int nPixels, int* limiarEscolhido);
 void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, int ncolunas);
@@ -41,20 +41,22 @@ int main() {
 	//tom de cinza predominante a ser ignorado na matriz esparsa
 	int predominante = 0;
 	int limiar = 0;
+	int nlinhas = 0;
+	int ncolunas = 0;
 	
 	Cabeca* matriz = criaCabeca();
 
-	preencherHistograma("lena.pgm", &nPixels, histograma, &predominante);
+	preencherHistograma("lena.pgm", &nPixels, histograma, &predominante, &nlinhas, &ncolunas);
 
 	printf("%d", predominante);
 	
-	carregarImagem("lena.pgm", matriz, &predominante);
+	carregarImagem("lena.pgm", matriz);
 
 	limiarMetodoOtsu(histograma, nPixels, &limiar);
 
 	printf("%d", limiar);
 
-	binarizarImagem(matriz, limiar, predominante, 512, 512);
+	binarizarImagem(matriz, limiar, predominante, nlinhas, ncolunas);
 	
 	return 0;
 }
@@ -205,53 +207,43 @@ Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca) {
 }
 
 // percorre o arquivo e preenche o vetor histograma com os valores correspondentes
-void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* predominante) {
+void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* predominante, int* nlinhas, int* ncolunas) {
 
 	FILE* imagem = fopen(arquivo, "r");
 	
 	char formato[2];
-	int nlinhas, ncolunas;
 	int ret = 0;
 	int pixel = 0;
-	int maior = 0;
 
 	for (int i = 0; i < 256; ++i) {
 		histograma[i] = 0;
 	}
 
 	//le primeiras 2 linhas: formato e tamanho da imagem
-	fscanf(imagem, "%s %d %d", formato, &nlinhas, &ncolunas);
+	fscanf(imagem, "%s %d %d %d", formato, nlinhas, ncolunas, predominante);
 
 	//atualiza numero de pixels na main
-	(*nPixels) = nlinhas*ncolunas;
+	(*nPixels) = (*nlinhas)*(*ncolunas);
 
 	while(ret != EOF) {
 	
 		ret = fscanf(imagem, "%d", &pixel);
 		(histograma[pixel])++;			
 	}
-
-	for(int i = 0; i < 256; i++){
-
-		if(histograma[i] > maior) {
-			maior = i;
-		}
-	}
-	
-	*predominante = maior;
 }
 
 //funçao que carrega uma imagem na matriz esparsa
-void carregarImagem(char arquivo[], Cabeca* cabeca, int* predominante) {
+void carregarImagem(char arquivo[], Cabeca* cabeca) {
 
 	FILE* imagem = fopen(arquivo, "r");
 
 	char formato[2];
 	int nlinhas, ncolunas;
+	int predominante = 0;
 	int pixel = 0;
 
 	//le primeiras 2 linhas: formato e tamanho da imagem
-	fscanf(imagem, "%s %d %d", formato, &nlinhas, &ncolunas);
+	fscanf(imagem, "%s %d %d %d", formato, &nlinhas, &ncolunas, &predominante);
 
     Celula* celula = NULL;
 
@@ -273,7 +265,7 @@ void carregarImagem(char arquivo[], Cabeca* cabeca, int* predominante) {
 			
 			fscanf(imagem, "%d", &pixel);
 
-			if(pixel != *predominante) {
+			if(pixel != predominante) {
 
 				celula = insereCelula(pixel, i, j, cabeca);
 				printf("%d %d %d     ", celula->indiceLinha, celula->indiceColuna, celula->valor);
@@ -372,7 +364,7 @@ void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, 
 	int j = 0;
 
 	fprintf(binarizada, "P2\n");
-	fprintf(binarizada, "%d %d\n", nlinhas, ncolunas);
+	fprintf(binarizada, "%d %d\n%d\n", nlinhas, ncolunas, predominante);
 	
 	do {
 		j = 0;	
