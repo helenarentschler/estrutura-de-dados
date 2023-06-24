@@ -32,6 +32,8 @@ void carregarImagem(char arquivo[], Cabeca* cabeca);
 void imprimeMatriz(Cabeca* cabeca);
 void limiarMetodoOtsu(int* histograma, int nPixels, int* limiarEscolhido);
 void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, int ncolunas);
+void desalocaMatriz(Cabeca** cabeca, int nLinhas,int nColunas);
+
 
 int main() {
 
@@ -57,6 +59,8 @@ int main() {
 	printf("%d", limiar);
 
 	binarizarImagem(matriz, limiar, predominante, nlinhas, ncolunas);
+
+	desalocaMatriz(&matriz,nlinhas,ncolunas);
 	
 	return 0;
 }
@@ -398,4 +402,42 @@ void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, 
 	} while(auxLinha != cabeca->primeiraLinha);
 
 	fclose(binarizada);
+}
+
+void desalocaMatriz(Cabeca** cabeca,int nLinhas, int nColunas){
+
+	if(*cabeca){
+
+		if ((*cabeca)->primeiraColuna && (*cabeca)->primeiraLinha){
+
+			Celula* auxColuna = (*cabeca)->primeiraColuna;
+			Celula* auxLinha = (*cabeca)->primeiraLinha;
+			Celula* aux = NULL;
+
+			while(auxColuna->indiceColuna > nColunas){
+
+				while(aux != auxColuna){
+
+					aux = auxColuna->abaixo;
+					if(aux != auxColuna){
+						auxColuna->abaixo = aux->abaixo;
+						free(aux);
+					}
+				}
+
+			(*cabeca)->primeiraColuna = auxColuna->direita;
+			free(auxColuna);
+			auxColuna = (*cabeca)->primeiraColuna;
+			}
+			while(auxLinha->indiceLinha > nLinhas){
+				(*cabeca)->primeiraLinha = auxLinha->abaixo;
+				free(auxLinha);
+				auxLinha->abaixo = (*cabeca)->primeiraLinha;
+			}
+		} 
+		free(cabeca);
+		*cabeca = NULL;
+	} else{
+		printf("Matriz inexistente");
+	}
 }
