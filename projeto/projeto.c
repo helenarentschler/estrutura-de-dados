@@ -268,6 +268,8 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 
 		if(imagem) {
 
+			printf("\ncarregando imagem...\n");
+
 			char formato[2];
 			int nlinhas, ncolunas;
 			int predominante = 0;
@@ -289,7 +291,7 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 		
 				insereLinha(cabeca, i);	
 			}
-		
+			
 			for (int i = 0; i < nlinhas; ++i) {
 		
 				for (int j = 0; j < ncolunas; ++j){
@@ -305,7 +307,8 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 
 			fclose(imagem);
 
-		} else {printf("Erro a abrir a imagem.\n");}		
+		} else {printf("Erro a abrir a imagem.\n");}
+				
 	} else {printf("Matriz vazia\n");}	
 
 }
