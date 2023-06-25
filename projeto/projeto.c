@@ -46,11 +46,11 @@ int main() {
 	
 	Cabeca* matriz = criaCabeca();
 
-	preencherHistograma("body.pgm", &nPixels, histograma, &predominante, &nlinhas, &ncolunas);
+	preencherHistograma("lena.pgm", &nPixels, histograma, &predominante, &nlinhas, &ncolunas);
 
 	printf("%d", predominante);
 	
-	carregarImagem("body.pgm", matriz);
+	carregarImagem("lena.pgm", matriz);
 
 	limiarMetodoOtsu(histograma, nPixels, &limiar);
 
@@ -78,135 +78,144 @@ Cabeca* criaCabeca() {
 }
 
 void insereLinha(Cabeca* cabeca, int linha) {
+
+	if(cabeca) {
+
+		Celula* novaLinha = (Celula*) malloc(sizeof(Celula));
+			
+		if(novaLinha) {
 	
-	Celula* novaLinha = (Celula*) malloc(sizeof(Celula));
-
-	if(novaLinha) {
-
-		novaLinha->valor = -1;
-		novaLinha->indiceColuna = -1;
-		novaLinha->indiceLinha = linha;
-
-		if(cabeca->ultimaLinha) {
-		
-			cabeca->ultimaLinha->abaixo = novaLinha;	
-
-		} else {
-
-			cabeca->primeiraLinha = novaLinha;
-		}
-
-		cabeca->ultimaLinha = novaLinha;
-		novaLinha->direita = novaLinha;
-		novaLinha->abaixo = cabeca->primeiraLinha;
-		
-	} else {printf("Nao foi possivel alocar memoria");}
-
+			novaLinha->valor = -1;
+			novaLinha->indiceColuna = -1;
+			novaLinha->indiceLinha = linha;
+	
+			if(cabeca->ultimaLinha) {
+			
+				cabeca->ultimaLinha->abaixo = novaLinha;	
+	
+			} else {
+	
+				cabeca->primeiraLinha = novaLinha;
+			}
+	
+			cabeca->ultimaLinha = novaLinha;
+			novaLinha->direita = novaLinha;
+			novaLinha->abaixo = cabeca->primeiraLinha;
+			
+		} else {printf("Nao foi possivel alocar memoria\n");}	
+	} else {printf("Matriz vazia.\n");}
 }
 
 void insereColuna(Cabeca* cabeca, int coluna) {
-	
-	Celula* novaColuna = (Celula*) malloc(sizeof(Celula));
 
-	if(novaColuna) {
+	if(cabeca) {
+		
+		Celula* novaColuna = (Celula*) malloc(sizeof(Celula));
 
-		novaColuna->valor = -1;
-		novaColuna->indiceColuna = coluna;
-		novaColuna->indiceLinha = -1;
-		
-		if(cabeca->primeiraColuna) {
-		
-			cabeca->ultimaColuna->direita = novaColuna;		
+		if(novaColuna) {
 
-		} else {
-		
-			cabeca->primeiraColuna = novaColuna;
-		}
+			novaColuna->valor = -1;
+			novaColuna->indiceColuna = coluna;
+			novaColuna->indiceLinha = -1;
+			
+			if(cabeca->primeiraColuna) {
+			
+				cabeca->ultimaColuna->direita = novaColuna;		
 
-		cabeca->ultimaColuna = novaColuna;
-		novaColuna->direita = cabeca->primeiraColuna;
-		novaColuna->abaixo = novaColuna;
-		
-	} else {printf("Nao foi possivel alocar memoria");}
+			} else {
+			
+				cabeca->primeiraColuna = novaColuna;
+			}
+
+			cabeca->ultimaColuna = novaColuna;
+			novaColuna->direita = cabeca->primeiraColuna;
+			novaColuna->abaixo = novaColuna;
+			
+		} else {printf("Nao foi possivel alocar memoria\n");}	
+	} else {printf("Matriz vazia.\n");}
 }
 
 //insere celula correspondente ao pixel no 
 Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca) {
 
-	Celula* nova = (Celula*) malloc(sizeof(Celula));
-	
-	if(nova) {
+	if(cabeca) {
+		
+		Celula* nova = (Celula*) malloc(sizeof(Celula));
+		
+		if(nova) {
 
-		nova->valor = valor;
-		nova->indiceColuna = coluna;
-		nova->indiceLinha = linha;
+			nova->valor = valor;
+			nova->indiceColuna = coluna;
+			nova->indiceLinha = linha;
 
-		//auxiliares que vao buscar as cabeças correspondentes a linha e coluna
-		Celula* linhaAchada = cabeca->primeiraLinha;
-		Celula* colunaAchada = cabeca->primeiraColuna;
+			//auxiliares que vao buscar as cabeças correspondentes a linha e coluna
+			Celula* linhaAchada = cabeca->primeiraLinha;
+			Celula* colunaAchada = cabeca->primeiraColuna;
 
-		//busca da cabeça da linha
-		do {
+			//busca da cabeça da linha
+			do {
 
-			if(linhaAchada->indiceLinha == linha) {
-				break;	
-			}	
+				if(linhaAchada->indiceLinha == linha) {
+					break;	
+				}	
 
-			linhaAchada = linhaAchada->abaixo;	
+				linhaAchada = linhaAchada->abaixo;	
+					
+			} while(linhaAchada != cabeca->primeiraLinha);	
+
+			//busca da cabeça da coluna
+			do {
+
+				if(colunaAchada->indiceColuna != coluna) {
+					break;
+				}
 				
-		} while(linhaAchada != cabeca->primeiraLinha);	
+				colunaAchada = colunaAchada->direita;
+			
+			} while(colunaAchada != cabeca->primeiraColuna);
 
-		//busca da cabeça da coluna
-		do {
+			//ou seja, a linha esta vazia
+			if(linhaAchada->direita == linhaAchada) {
+				
+				linhaAchada->direita = nova;
+				nova->direita = linhaAchada;
+			
+			} else {
 
-			if(colunaAchada->indiceColuna != coluna) {
-				break;
+				Celula* pauxlinha = linhaAchada->direita;
+
+				do {
+					pauxlinha = pauxlinha->direita;
+					//final da linha
+				} while (pauxlinha->direita != linhaAchada);
+
+				pauxlinha->direita = nova;
+				nova->direita = linhaAchada;
+
 			}
 			
-			colunaAchada = colunaAchada->direita;
-		
-		} while(colunaAchada != cabeca->primeiraColuna);
+			if(colunaAchada->abaixo == colunaAchada) {
 
-		//ou seja, a linha esta vazia
-		if(linhaAchada->direita == linhaAchada) {
+				colunaAchada->abaixo = nova;
+				nova->abaixo = colunaAchada;
 			
-			linhaAchada->direita = nova;
-			nova->direita = linhaAchada;
-		
-		} else {
+			} else {
 
-			Celula* pauxlinha = linhaAchada->direita;
+				Celula* pauxcoluna = colunaAchada->abaixo;
 
-			do {
-				pauxlinha = pauxlinha->direita;
-				//final da linha
-			} while (pauxlinha->direita != linhaAchada);
+				do {
+					pauxcoluna = pauxcoluna->abaixo;
+				} while (pauxcoluna->abaixo != colunaAchada);
 
-			pauxlinha->direita = nova;
-			nova->direita = linhaAchada;
+				pauxcoluna->abaixo = nova;
+				nova->abaixo = colunaAchada;
+			}
 
-		}
-		
-		if(colunaAchada->abaixo == colunaAchada) {
+		} else {printf("Nao foi possivel alocar memoria\n");}	
 
-			colunaAchada->abaixo = nova;
-			nova->abaixo = colunaAchada;
-		
-		} else {
+		return nova;
 
-			Celula* pauxcoluna = colunaAchada->abaixo;
-
-			do {
-				pauxcoluna = pauxcoluna->abaixo;
-			} while (pauxcoluna->abaixo != colunaAchada);
-
-			pauxcoluna->abaixo = nova;
-			nova->abaixo = colunaAchada;
-		}
-
-	} else {printf("Nao foi possivel alocar memoria");}
-
-	return nova;
+	} else {printf("Matriz vazia.\n");}
 }
 
 // percorre o arquivo e preenche o vetor histograma com os valores correspondentes
@@ -236,7 +245,7 @@ void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* pre
 			(histograma[pixel])++;			
 		}	
 		
-	} else {printf("Erro a abrir a imagem.");}
+	} else {printf("Erro a abrir a imagem.\n");}
 
 	fclose(imagem);
 }
@@ -244,49 +253,54 @@ void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* pre
 //funçao que carrega uma imagem na matriz esparsa
 void carregarImagem(char arquivo[], Cabeca* cabeca) {
 
-	FILE* imagem = fopen(arquivo, "r");
+	if(cabeca) {
+		
+		FILE* imagem = fopen(arquivo, "r");
 
-	if(imagem) {
+		if(imagem) {
 
-		char formato[2];
-		int nlinhas, ncolunas;
-		int predominante = 0;
-		int pixel = 0;
-	
-		//le primeiras 2 linhas: formato e tamanho da imagem
-		fscanf(imagem, "%s %d %d %d", formato, &nlinhas, &ncolunas, &predominante);
-	
-	    Celula* celula = NULL;
-	
-		for (int i = 0; i < ncolunas; ++i) {
-	
-			//insere celulas cabeça de coluna
-			insereColuna(cabeca, i);
-		}
-	
-		for (int i = 0; i < nlinhas; ++i) {
-	
-			//insere celulas cabeca de coluna
-			insereLinha(cabeca, i);	
-		}
-	
-		for (int i = 0; i < nlinhas; ++i) {
-	
-			for (int j = 0; j < ncolunas; ++j){
-				
-				fscanf(imagem, "%d", &pixel);
-	
-				if(pixel != predominante) {
-	
-					celula = insereCelula(pixel, i, j, cabeca);
-					printf("%d %d %d     ", celula->indiceLinha, celula->indiceColuna, celula->valor);
+			char formato[2];
+			int nlinhas, ncolunas;
+			int predominante = 0;
+			int pixel = 0;
+		
+			//le primeiras 2 linhas: formato e tamanho da imagem
+			fscanf(imagem, "%s %d %d %d", formato, &nlinhas, &ncolunas, &predominante);
+		
+		    Celula* celula = NULL;
+		
+			for (int i = 0; i < ncolunas; ++i) {
+		
+				//insere celulas cabeça de coluna
+				insereColuna(cabeca, i);
+			}
+		
+			for (int i = 0; i < nlinhas; ++i) {
+		
+				//insere celulas cabeca de coluna
+				insereLinha(cabeca, i);	
+			}
+		
+			for (int i = 0; i < nlinhas; ++i) {
+		
+				for (int j = 0; j < ncolunas; ++j){
+					
+					fscanf(imagem, "%d", &pixel);
+		
+					if(pixel != predominante) {
+		
+						celula = insereCelula(pixel, i, j, cabeca);
+						printf("%d %d %d     ", celula->indiceLinha, celula->indiceColuna, celula->valor);
+					}
 				}
 			}
-		}
-		
-	} else {printf("Erro a abrir a imagem.");}
+			
+		} else {printf("Erro a abrir a imagem.\n");}
 
-	fclose(imagem);
+		fclose(imagem);
+		
+	} else {printf("Matriz vazia\n");}	
+
 }
 
 //funçao de teste que imprime a matriz linha a linha
@@ -361,59 +375,63 @@ void limiarMetodoOtsu(int* histograma, int nPixels, int* limiarEscolhido) {
 
 void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, int ncolunas) {
 
-	FILE* binarizada = fopen("binarizada.pgm", "w");
-
-	if(binarizada) {
-
-		if(predominante > limiar) {
-			
-			predominante = 255;
-			
-		} else {
+	if(cabeca) {
 		
-			predominante = 0;
-		}
-	
-		Celula* auxLinha = cabeca->primeiraLinha;
-		Celula* aux = NULL;
-		int j = 0;
-	
-		fprintf(binarizada, "P2\n");
-		fprintf(binarizada, "%d %d\n%d\n", nlinhas, ncolunas, predominante);
+		FILE* binarizada = fopen("binarizada.pgm", "w");
+
+		if(binarizada) {
+
+			if(predominante > limiar) {
+				
+				predominante = 255;
+				
+			} else {
+			
+				predominante = 0;
+			}
 		
-		do {
-			j = 0;	
-			aux = auxLinha->direita;
-			do {			
-				if(aux->indiceColuna == j) {
-	
-					if(aux->valor > limiar) {
-					
-						fprintf(binarizada, "%d\n", 255);
+			Celula* auxLinha = cabeca->primeiraLinha;
+			Celula* aux = NULL;
+			int j = 0;
+		
+			fprintf(binarizada, "P2\n");
+			fprintf(binarizada, "%d %d\n%d\n", nlinhas, ncolunas, predominante);
+			
+			do {
+				j = 0;	
+				aux = auxLinha->direita;
+				do {			
+					if(aux->indiceColuna == j) {
+		
+						if(aux->valor > limiar) {
+						
+							fprintf(binarizada, "%d\n", 255);
+							
+						} else {
+		
+							fprintf(binarizada, "%d\n", 0);
+						}
+						
+						aux = aux->direita;		
 						
 					} else {
-	
-						fprintf(binarizada, "%d\n", 0);
+					
+						fprintf(binarizada, "%d\n", predominante);
+						
 					}
 					
-					aux = aux->direita;		
-					
-				} else {
+					j++;
 				
-					fprintf(binarizada, "%d\n", predominante);
-					
-				}
+				} while(j < ncolunas);
 				
-				j++;
-			
-			} while(j < ncolunas);
-			
-			auxLinha = auxLinha->abaixo;
-			
-		} while(auxLinha != cabeca->primeiraLinha);	
+				auxLinha = auxLinha->abaixo;
+				
+			} while(auxLinha != cabeca->primeiraLinha);	
 
-	} else {printf("Erro ao abrir a imagem");}
+		} else {printf("Erro ao abrir a imagem");}
 
-	fclose(binarizada);
+		fclose(binarizada);
+
+	} else {printf("Matriz vazia\n");}	
 }
 
