@@ -1,6 +1,7 @@
 //Trabalho estrutura de dados: Helena Rentschler e Paulo Adriano Lupepsa
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct Celula Celula;
 typedef struct Cabeca Cabeca;
@@ -29,9 +30,9 @@ void insereColuna(Cabeca* cabeca, int coluna);
 Celula* insereCelula(int valor, int linha, int coluna, Cabeca* cabeca);
 void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* predominante, int* nlinhas, int* colunas);
 void carregarImagem(char arquivo[], Cabeca* cabeca);
-void imprimeMatriz(Cabeca* cabeca);
 void limiarMetodoOtsu(int* histograma, int nPixels, int* limiarEscolhido);
 void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, int ncolunas);
+void desalocaMatriz(Cabeca* cabeca,int nLinhas, int nColunas);
 
 int main() {
 
@@ -43,20 +44,29 @@ int main() {
 	int limiar = 0;
 	int nlinhas = 0;
 	int ncolunas = 0;
+
+	char arquivo[20];
 	
 	Cabeca* matriz = criaCabeca();
 
-	preencherHistograma("lena.pgm", &nPixels, histograma, &predominante, &nlinhas, &ncolunas);
+	printf("Insira o nome do arquivo de imagem a ser binarizado (sem extensao): \n");
+	scanf("%s", arquivo);
 
-	printf("%d", predominante);
+	strcat(arquivo, ".pgm");
+
+	carregarImagem(arquivo, matriz);
+
+	if(matriz->primeiraColuna) {
+
+		preencherHistograma(arquivo, &nPixels, histograma, &predominante, &nlinhas, &ncolunas);
+		
+		limiarMetodoOtsu(histograma, nPixels, &limiar);
 	
-	carregarImagem("lena.pgm", matriz);
+		binarizarImagem(matriz, limiar, predominante, nlinhas, ncolunas);
+	
+		desalocaMatriz(matriz,nlinhas,ncolunas);	
 
-	limiarMetodoOtsu(histograma, nPixels, &limiar);
-
-	printf("%d", limiar);
-
-	binarizarImagem(matriz, limiar, predominante, nlinhas, ncolunas);
+	}
 	
 	return 0;
 }
@@ -244,10 +254,10 @@ void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* pre
 			ret = fscanf(imagem, "%d", &pixel);
 			(histograma[pixel])++;			
 		}	
+
+		fclose(imagem);
 		
 	} else {printf("Erro a abrir a imagem.\n");}
-
-	fclose(imagem);
 }
 
 //funçao que carrega uma imagem na matriz esparsa
@@ -290,87 +300,63 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 					if(pixel != predominante) {
 		
 						celula = insereCelula(pixel, i, j, cabeca);
-						printf("%d %d %d     ", celula->indiceLinha, celula->indiceColuna, celula->valor);
+						printf("%d %d %d", celula->indiceLinha, celula->indiceColuna, celula->valor);
 					}
 				}
 			}
-			
-		} else {printf("Erro a abrir a imagem.\n");}
 
-		fclose(imagem);
-		
+			fclose(imagem);
+
+		} else {printf("Erro a abrir a imagem.\n");}		
 	} else {printf("Matriz vazia\n");}	
 
 }
 
-//funçao de teste que imprime a matriz linha a linha
-void imprimeMatriz(Cabeca* cabeca) {
-
-	Celula* auxLinha = cabeca->primeiraLinha;
-	Celula* aux = cabeca->primeiraLinha;
-
-	do {
-		//se a linha for vazia, nao imprime
-		if(auxLinha->direita != auxLinha) {
-			//começa pela primeira celula
-			aux = auxLinha->direita; 
-					
-			do {
-			
-				printf("valor %d\n", aux->valor);		
-				aux = aux->direita;		
-				
-			} while(aux != auxLinha);	
-		}
-		
-		auxLinha = auxLinha->abaixo;
-
-	} while(auxLinha != cabeca->primeiraLinha);
-	 
-}
-
-
 void limiarMetodoOtsu(int* histograma, int nPixels, int* limiarEscolhido) {
-	
-	double varianciaMaxima = 0.0;
-    int limiarOtimo = 0;
 
-    for (int limiar = 0; limiar < 256; limiar++) {
-        // Calcula a probabilidade de pixels abaixo e acima do limiar
-        double probabilidadeAbaixo = 0.0;
-        double probabilidadeAcima = 0.0;
+	if(nPixels) {
+		
+		double varianciaMaxima = 0.0;
+	    int limiarOtimo = 0;
 
-        for (int i = 0; i <= limiar; i++) {
-            probabilidadeAbaixo += (double) histograma[i] / nPixels;
-        }
-        probabilidadeAcima = 1.0 - probabilidadeAbaixo;
+	    for (int limiar = 0; limiar < 256; limiar++) {
+	        // Calcula a probabilidade de pixels abaixo e acima do limiar
+	        double probabilidadeAbaixo = 0.0;
+	        double probabilidadeAcima = 0.0;
 
-        // Calcula as médias dos pixels abaixo e acima do limiar
-        double mediaAbaixo = 0.0;
-        double mediaAcima = 0.0;
+	        for (int i = 0; i <= limiar; i++) {
+	            probabilidadeAbaixo += (double) histograma[i] / nPixels;
+	        }
+	        probabilidadeAcima = 1.0 - probabilidadeAbaixo;
 
-        if (probabilidadeAbaixo != 0.0) {
-            for (int i = 0; i <= limiar; i++) {
-                mediaAbaixo += (i * histograma[i]) / (nPixels * probabilidadeAbaixo);
-            }
-        }
-        if (probabilidadeAcima != 0.0) {
-            for (int i = limiar + 1; i < 256; i++) {
-                mediaAcima += (i * histograma[i]) / (nPixels * probabilidadeAcima);
-            }
-        }
+	        // Calcula as médias dos pixels abaixo e acima do limiar
+	        double mediaAbaixo = 0.0;
+	        double mediaAcima = 0.0;
 
-        // Calcula a variância entre as classes abaixo e acima do limiar
-        double variancia = probabilidadeAbaixo * probabilidadeAcima * (mediaAbaixo - mediaAcima) * (mediaAbaixo - mediaAcima);
+	        if (probabilidadeAbaixo != 0.0) {
+	            for (int i = 0; i <= limiar; i++) {
+	                mediaAbaixo += (i * histograma[i]) / (nPixels * probabilidadeAbaixo);
+	            }
+	        }
+	        if (probabilidadeAcima != 0.0) {
+	            for (int i = limiar + 1; i < 256; i++) {
+	                mediaAcima += (i * histograma[i]) / (nPixels * probabilidadeAcima);
+	            }
+	        }
 
-        // Atualiza o limiar ótimo se a variância for maior
-        if (variancia > varianciaMaxima) {
-            varianciaMaxima = variancia;
-            limiarOtimo = limiar;
-        }
-    }
+	        // Calcula a variância entre as classes abaixo e acima do limiar
+	        double variancia = probabilidadeAbaixo * probabilidadeAcima * (mediaAbaixo - mediaAcima) * (mediaAbaixo - mediaAcima);
 
-    *limiarEscolhido =  limiarOtimo;
+	        // Atualiza o limiar ótimo se a variância for maior
+	        if (variancia > varianciaMaxima) {
+	            varianciaMaxima = variancia;
+	            limiarOtimo = limiar;
+	        }
+	    }
+
+	    *limiarEscolhido =  limiarOtimo;
+
+	 }else {printf("Matriz vazia\n");}		
 }
 
 void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, int ncolunas) {
@@ -428,10 +414,50 @@ void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, 
 				
 			} while(auxLinha != cabeca->primeiraLinha);	
 
+			fclose(binarizada);
+
 		} else {printf("Erro ao abrir a imagem");}
-
-		fclose(binarizada);
-
 	} else {printf("Matriz vazia\n");}	
+}
+
+void desalocaMatriz(Cabeca* cabeca,int nLinhas, int nColunas){
+
+	if(cabeca){
+
+		if (cabeca->primeiraColuna && cabeca->primeiraLinha){
+
+			Celula* auxColuna = cabeca->primeiraColuna;
+			Celula* auxLinha = cabeca->primeiraLinha;
+			Celula* aux = NULL;
+
+			for(int i = 0;i<nColunas;i++){
+
+				while(aux != auxColuna){
+
+					aux = auxColuna->abaixo;
+					if(aux != auxColuna){
+						auxColuna->abaixo = aux->abaixo;
+						free(aux);
+					}
+				}
+
+				cabeca->primeiraColuna = auxColuna->direita;
+				free(auxColuna);
+				auxColuna = cabeca->primeiraColuna;
+
+			}
+
+			for(int j = 0;j<nLinhas;j++){
+
+				cabeca->primeiraLinha = auxLinha->abaixo;
+				free(auxLinha);
+				auxLinha = cabeca->primeiraLinha;
+
+			}
+		} 
+
+		free(cabeca);
+
+	} else { printf("Matriz vazia\n");}
 }
 
