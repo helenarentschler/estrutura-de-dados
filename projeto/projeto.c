@@ -32,6 +32,7 @@ void carregarImagem(char arquivo[], Cabeca* cabeca);
 void imprimeMatriz(Cabeca* cabeca);
 void limiarMetodoOtsu(int* histograma, int nPixels, int* limiarEscolhido);
 void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, int ncolunas);
+void desalocaMatriz(Cabeca* cabeca,int nLinhas, int nColunas);
 
 int main() {
 
@@ -46,17 +47,21 @@ int main() {
 	
 	Cabeca* matriz = criaCabeca();
 
-	preencherHistograma("body.pgm", &nPixels, histograma, &predominante, &nlinhas, &ncolunas);
+	preencherHistograma("beija_flor.pgm", &nPixels, histograma, &predominante, &nlinhas, &ncolunas);
 
 	printf("%d", predominante);
 	
-	carregarImagem("body.pgm", matriz);
+	carregarImagem("beija_flor.pgm", matriz);
 
 	limiarMetodoOtsu(histograma, nPixels, &limiar);
 
 	printf("%d", limiar);
 
 	binarizarImagem(matriz, limiar, predominante, nlinhas, ncolunas);
+
+    desalocaMatriz(matriz,nlinhas,ncolunas);
+
+    matriz = NULL;
 	
 	return 0;
 }
@@ -230,7 +235,7 @@ void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* pre
 		//atualiza numero de pixels na main
 		(*nPixels) = (*nlinhas)*(*ncolunas);
 	
-		while(ret != EOF) {
+		for(int i = 0; i < (*nPixels);i++) {
 		
 			ret = fscanf(imagem, "%d", &pixel);
 			(histograma[pixel])++;			
@@ -417,3 +422,46 @@ void binarizarImagem(Cabeca* cabeca, int limiar, int predominante, int nlinhas, 
 	fclose(binarizada);
 }
 
+void desalocaMatriz(Cabeca* cabeca,int nLinhas, int nColunas){
+
+	if(cabeca){
+
+		if (cabeca->primeiraColuna && cabeca->primeiraLinha){
+
+			Celula* auxColuna = cabeca->primeiraColuna;
+			Celula* auxLinha = cabeca->primeiraLinha;
+			Celula* aux = NULL;
+
+			for(int i = 0;i<nColunas;i++){
+
+				while(aux != auxColuna){
+
+					aux = auxColuna->abaixo;
+					if(aux != auxColuna){
+						auxColuna->abaixo = aux->abaixo;
+						free(aux);
+					}
+				}
+
+				cabeca->primeiraColuna = auxColuna->direita;
+				free(auxColuna);
+				auxColuna = cabeca->primeiraColuna;
+
+			}
+			for(int j = 0;j<nLinhas;j++){
+
+				cabeca->primeiraLinha = auxLinha->abaixo;
+				free(auxLinha);
+				auxLinha = cabeca->primeiraLinha;
+
+			}
+		} 
+
+		free(cabeca);
+
+	} else{
+
+		printf("Matriz inexistente");
+
+	}
+}
