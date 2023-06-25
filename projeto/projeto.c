@@ -236,7 +236,6 @@ void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* pre
 	if(imagem) {
 
 		char formato[2];
-		int ret = 0;
 		int pixel = 0;
 	
 		for (int i = 0; i < 256; ++i) {
@@ -249,9 +248,9 @@ void preencherHistograma(char arquivo[], int* nPixels, int* histograma, int* pre
 		//atualiza numero de pixels na main
 		(*nPixels) = (*nlinhas)*(*ncolunas);
 	
-		while(ret != EOF) {
+		for(int i = 0; i < (*nPixels); i++) {
 		
-			ret = fscanf(imagem, "%d", &pixel);
+			fscanf(imagem, "%d", &pixel);
 			(histograma[pixel])++;			
 		}	
 
@@ -278,16 +277,16 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 			fscanf(imagem, "%s %d %d %d", formato, &nlinhas, &ncolunas, &predominante);
 		
 		    Celula* celula = NULL;
-		
+		    
+			//insere celulas cabeça de coluna
 			for (int i = 0; i < ncolunas; ++i) {
 		
-				//insere celulas cabeça de coluna
 				insereColuna(cabeca, i);
 			}
-		
+			
+			//insere celulas cabeca de coluna
 			for (int i = 0; i < nlinhas; ++i) {
 		
-				//insere celulas cabeca de coluna
 				insereLinha(cabeca, i);	
 			}
 		
@@ -300,7 +299,6 @@ void carregarImagem(char arquivo[], Cabeca* cabeca) {
 					if(pixel != predominante) {
 		
 						celula = insereCelula(pixel, i, j, cabeca);
-						printf("%d %d %d", celula->indiceLinha, celula->indiceColuna, celula->valor);
 					}
 				}
 			}
